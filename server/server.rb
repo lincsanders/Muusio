@@ -1,6 +1,5 @@
-bp=File.dirname(__FILE__)
-load "#{bp}/playlist.rb"
-load "#{bp}/track.rb"
+require_relative "playlist"
+require_relative "track"
 
 class Server < Sinatra::Base
   use Playlist
@@ -22,7 +21,14 @@ class Server < Sinatra::Base
   end
 
   get '/' do
-    configuration.to_json
+    p = Preferences.new
+    p.username = @@username
+    p.password = @@password
+    p.computer_name = @@computer_name
+    p.save
+    p.to_json
+
+    # configuration.to_json
   end
 
   get '/version' do

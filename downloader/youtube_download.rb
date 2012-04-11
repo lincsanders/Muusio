@@ -29,9 +29,9 @@ class YoutubeDownload < BaseDownload
         #DESPERATELY need to increase the quality this scrapes
         vidlink = foundlinks.gsub(",url=","").gsub("%3A",":").gsub("%2F","/").gsub("%3F","?").gsub("%3D","=").gsub("%252C",",").gsub("%253A",":").gsub("%26","&").gsub("\\u0026quality","")
       end
-      puts "downloading from #{vidlink}"
+      # puts "downloading from #{vidlink}"
 
-      puts "Download link found for #{@filename}!"
+      # puts "Download link found for #{@filename}!"
 
       writeOut = open(@tmp_flv, "wb")
       writeOut.write(open(vidlink).read)
@@ -44,9 +44,9 @@ class YoutubeDownload < BaseDownload
   end
 
   def convert_to_mp3
-    puts "ffmpeg conversion executed"
+    # puts "ffmpeg conversion executed"
     system "ffmpeg -i \"#{@tmp_flv}\" -acodec mp3 -ab 128 \"#{@tmp_mp3}\""
-    puts "ffmpeg conversion complete!"
+    # puts "ffmpeg conversion complete!"
 
     #FileUtils.rm(@tmp_flv)
   end

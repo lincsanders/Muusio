@@ -11,9 +11,9 @@ require_relative 'youtube_download'
 
 class Downloader
 
-  @torrent_monitor_thread=nil
-  
-  @download_threads=[]
+  @torrent_monitor_thread = nil
+  @logging = false
+  @download_threads = []
 
   TORRENTS_DIR='./torrents'
 
@@ -21,25 +21,24 @@ class Downloader
 
     def run!
       @torrent_file_monitor_thread=Thread.new{torrent_file_monitor}
-
-      Downloader.download_torrent('http://lincoln-mba-public.s3.amazonaws.com/Gemini%20-%20No%20Way%20Out.mp3?torrent')
-
-      while true
-        @download_threads.each do |t|
-          if !t.alive?
-            @download_threads.delete(t) 
-            puts "Thread killed gracefully!"
+      Thread.new{
+        while true
+          @download_threads.each do |t|
+            if !t.alive?
+              @download_threads.delete(t) 
+              puts "Thread killed gracefully!" if @logging
+            end
           end
-        end
-        puts "#{@download_threads.length} total threads..."
-        sleep 10
-      end
+          puts "#{@download_threads.length} total threads..." if @logging
+          sleep 10
+        end 
+      }
     end
 
     def torrent_file_monitor
       # Existing torrents
       Dir.glob(TORRENTS_DIR+'/**.torrent').each do |filename|
-        puts "Added existing torrent #{filename}"
+        puts "Added existing torrent #{filename}" if @logging
         download_torrent(filename)
       end
 
@@ -47,7 +46,7 @@ class Downloader
       FSSM.monitor(TORRENTS_DIR, '**.torrent') do
         puts "Monitoring Initialized, watching for new torrents."
         create do |path,file|
-          Downloader.download_torrent("#{TORRENTS_DIR}/#{file}")
+          Downloader.download_torrent("#{TORRENTS_DIR}/#{file}") if @logging
         end
       end
     end
@@ -55,21 +54,21 @@ class Downloader
     def download_torrent(torrent_file)
 
       @download_threads << Thread.new{
-        puts "Downloading #{torrent_file}"
+        puts "Downloading #{torrent_file}" if @logging
         download = TorrentDownload.new(torrent_file)
 
         progress = -1.0
 
         while !download.is_complete?
-          puts "#{torrent_file}: " + download.percent.round(2).to_s + "%"
+          puts "#{torrent_file}: " + download.percent.round(2).to_s + "%" if @logging
           sleep 3
         end
 
-        puts download.filename + " download complete, moving files..."
+        puts download.filename + " download complete, moving files..." if @logging
 
         download.move_finished_download
 
-        puts download.filename + " now ready to play!"
+        puts download.filename + " now ready to play!" if @logging
 
         self.kill
       }
@@ -78,14 +77,14 @@ class Downloader
     def download_youtube(url)
 
       @download_threads << Thread.new{
-        puts "Downloading #{url}"
+        puts "Downloading #{url}" if @logging
         download = YoutubeDownload.new(url)
 
-        puts download.filename + " download complete, moving files..."
+        puts download.filename + " download complete, moving files..." if @logging
 
         download.move_finished_download
 
-        puts download.filename + " now ready to play!"
+        puts download.filename + " now ready to play!" if @logging
 
         self.kill
       }
@@ -95,6 +94,4 @@ class Downloader
       # TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO 
     end
   end
-
-  run!
 end

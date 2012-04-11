@@ -3,10 +3,10 @@ class Indexer
 	@file_changes_thread=nil
 	@send_files_thread=nil
 	@send_ping_pong_thread=nil
+	@send_file_list_thread=nil
 
 	class << self
 		def run!
-			send_file_list
 			@listen_for_file_changes=Thread.new{listen_for_file_changes}
 			@send_file_changes=Thread.new{send_file_changes}
 			@send_ping_pong=Thread.new{send_ping_pong}
@@ -22,15 +22,6 @@ class Indexer
 					hash: hash,
 					size: size,
 				}
-			end
-		end
-
-		def send_file_changes
-			## Check changes and make sure create and delete is not really just a name change
-			while true do
-				#pp @@changes
-				#puts "Checking changes and sending em off to webserver"
-				sleep 0.4
 			end
 		end
 

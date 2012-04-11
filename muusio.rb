@@ -1,24 +1,32 @@
 require 'rubygems'
 require 'sinatra/base'
-require 'data_mapper'
 require 'json'
 require 'fssm'
 require 'thread'
 require 'highline/import'
+require 'net/http'
 
 # For debug
 require 'pp'
 
-load 'indexer/indexer.rb'
-load 'downloader/downloader.rb'
-load 'server/server.rb'
-
-@@username = ask "Username: "
-@@password = ask "Password: "
-@@computer_name = ask "Computer Name: "
-
 @@files=[]
 @@changes=[]
+# @@mothership="http://localhost:3000"
+@@mothership="http://muusio-mothership.herokuapp.com"
+
+require_relative 'indexer/indexer'
+require_relative 'downloader/downloader'
+require_relative 'login/login'
+require_relative 'server/server'
+require_relative 'db/db'
+
+Db.run!
+
+@@preferences=Preferences.first
+Login.hello!
+
+Login.ensure_computer_name!
+Login.authenticate!
 
 Indexer.run!
 Downloader.run!
