@@ -9,8 +9,6 @@ require 'net/http'
 # For debug
 require 'pp'
 
-@@files=[]
-@@changes=[]
 # @@mothership="http://localhost:3000"
 @@mothership="http://muusio-mothership.herokuapp.com"
 

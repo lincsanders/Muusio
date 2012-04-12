@@ -1,8 +1,4 @@
 class BaseDownload
-
-  TMP_DIR="./in_progress/"
-  DESTINATION_DIR="./../muusio_indexer/mp3/received/"
-  
   @filename=nil
   @tmp_file=nil
   @destination=nil

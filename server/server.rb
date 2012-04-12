@@ -14,21 +14,12 @@ class Server < Sinatra::Base
     {
       name:'Muusio',
       version: MUUSIO_VERSION,
-      username: @@username,
-      password: @@password,
-      computer_name: @@computer_name,
+      preferences: @@preferences,
     }
   end
 
   get '/' do
-    p = Preferences.new
-    p.username = @@username
-    p.password = @@password
-    p.computer_name = @@computer_name
-    p.save
-    p.to_json
 
-    # configuration.to_json
   end
 
   get '/version' do
@@ -36,10 +27,22 @@ class Server < Sinatra::Base
   end
 
   get '/files' do
-    @@files.to_json
+    Indexer.files.to_json
   end
 
   get '/changes' do
-    @@files.to_json
+    Indexer.changes.to_json
+  end
+
+  post '/download' do
+    if Downloader.download_torrent(params[:torrent_url])
+      "Torrent download initiated!"
+    else
+      "Error adding download... are you sure this isn't already downloading?"
+    end
+  end
+
+  get '/current_downloads' do
+    Downloader.current_downloads.to_json
   end
 end

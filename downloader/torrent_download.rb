@@ -11,13 +11,13 @@ class TorrentDownload < BaseDownload
     mi = RubyTorrent::MetaInfo.from_location(@torrent_file)
 
     @filename = filename ? filename : mi.info.name
-    @tmp_file = tmp_file ? tmp_file : unique_file("#{TMP_DIR}#{@filename}")
+    @tmp_file = tmp_file ? tmp_file : unique_file("#{Downloader.tmp_dir}#{@filename}")
 
     @bittorrent = RubyTorrent::BitTorrent.new(@torrent_file, @tmp_file)
   end
 
   def move_finished_download(destination=nil)
-    @destination = destination ? destination : unique_file(DESTINATION_DIR + @filename)
+    @destination = destination ? destination : unique_file(Downloader.destination_dir + @filename)
 
     FileUtils.mv(@tmp_file, @destination)
     if File.exists?(@torrent_file)
