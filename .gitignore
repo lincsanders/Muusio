@@ -1,4 +1,5 @@
 *.mp3
 mp3/
 .DS_Store
-db/storage/*
+db/storage
+*.db

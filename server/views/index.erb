@@ -1,4 +1,5 @@
 <script src="/js/soundmanager2-jsmin.js"></script>
+<script src="/js/mediakeys.js"></script>
 
 <script>
 	MuusioPlayer = {
@@ -75,18 +76,8 @@
 			}
 
 			$('#play-pause-button').click(function(e){
-
-				if(MuusioPlayer.currentTrack.playState == 0)
-					MuusioPlayer.currentTrack.play();
-				else if(MuusioPlayer.currentTrack.paused) 
-					MuusioPlayer.currentTrack.resume(); 
-				else 
-					MuusioPlayer.currentTrack.pause();
-
-				console.log(MuusioPlayer.currentTrack);
-
-				e.preventDefault();
-				return false;
+				MuusioPlayer.playPause();
+				e.preventDefault(); return false;
 			});
 
 			$('#prev-button').click(function(e){
@@ -137,6 +128,17 @@
 
 			console.log("Now looking for " + $prev.attr('id'));
 			MuusioPlayer.playTrack(MuusioPlayer.tracks[$prev.attr('id')]);
+		},
+
+		playPause: function(){
+			if(MuusioPlayer.currentTrack.playState == 0)
+				MuusioPlayer.currentTrack.play();
+			else if(MuusioPlayer.currentTrack.paused) 
+				MuusioPlayer.currentTrack.resume(); 
+			else 
+				MuusioPlayer.currentTrack.pause();
+
+			console.log(MuusioPlayer.currentTrack);
 		},
 
 		monitorTrack: function(track){
