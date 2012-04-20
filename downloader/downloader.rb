@@ -13,13 +13,12 @@ class Downloader
   @bp = File.expand_path File.dirname(__FILE__)
 
   @torrent_monitor_thread = nil
-  @logging = false
   @download_threads = []
   @current_downloads = []
 
   class << self
     def tmp_dir; @bp + '/in_progress/'; end;
-    def destination_dir; @bp + '/../muusio_indexer/mp3/received/'; end;
+    def destination_dir; @bp + '/../indexer/mp3/received/'; end;
     def current_downloads; @current_downloads; end;
 
     def run!
@@ -38,10 +37,10 @@ class Downloader
           @download_threads.each do |t|
             if !t.alive?
               @download_threads.delete(t) 
-              puts "Thread killed gracefully!" if @logging
+              puts "Thread killed gracefully!" if @@logging
             end
           end
-          puts "#{@download_threads.length} total threads..." if @logging
+          puts "#{@download_threads.length} total download threads..." if @@logging && @download_threads.length > 0
           sleep 10
         end 
       }
@@ -51,22 +50,22 @@ class Downloader
       return false if (torrent_file.nil? || torrent_file == '')
 
       @download_threads << Thread.new{
-        puts "Downloading #{torrent_file}" if @logging
+        puts "Downloading #{torrent_file}" if @@logging
         download = TorrentDownload.new(torrent_file)
         @current_downloads << download
 
         progress = -1.0
 
         while !download.is_complete?
-          puts "#{torrent_file}: " + download.percent.round(2).to_s + "%" if @logging
+          puts "#{torrent_file}: " + download.percent.round(2).to_s + "%" if @@logging
           sleep 3
         end
 
-        puts download.filename + " download complete, moving files..." if @logging
+        puts download.filename + " download complete, moving files..." if @@logging
 
         download.move_finished_download
 
-        puts download.filename + " now ready to play!" if @logging
+        puts download.filename + " now ready to play!" if @@logging
 
         @current_downloads.delete(download)
         self.kill
@@ -78,15 +77,15 @@ class Downloader
     def download_youtube(url)
 
       @download_threads << Thread.new{
-        puts "Downloading #{url}" if @logging
+        puts "Downloading #{url}" if @@logging
         download = YoutubeDownload.new(url)
         @current_downloads << download
 
-        puts download.filename + " download complete, moving files..." if @logging
+        puts download.filename + " download complete, moving files..." if @@logging
 
         download.move_finished_download
 
-        puts download.filename + " now ready to play!" if @logging
+        puts download.filename + " now ready to play!" if @@logging
 
         @current_downloads.delete(download)
         self.kill
@@ -100,7 +99,7 @@ class Downloader
     # def torrent_file_monitor
     #   # Existing torrents
     #   Dir.glob(TORRENTS_DIR+'/**.torrent').each do |filename|
-    #     puts "Added existing torrent #{filename}" if @logging
+    #     puts "Added existing torrent #{filename}" if @@logging
     #     download_torrent(filename)
     #   end
 
@@ -108,7 +107,7 @@ class Downloader
     #   FSSM.monitor(TORRENTS_DIR, '**.torrent') do
     #     puts "Monitoring Initialized, watching for new torrents."
     #     create do |path,file|
-    #       Downloader.download_torrent("#{TORRENTS_DIR}/#{file}") if @logging
+    #       Downloader.download_torrent("#{TORRENTS_DIR}/#{file}") if @@logging
     #     end
     #   end
     # end

@@ -1,0 +1,24 @@
+progress {
+	width: 500px;
+}
+
+#song-list {
+	overflow:scroll;
+	height: auto;
+}
+
+.left {
+	float:left;
+}
+
+.clear {
+	clear: both;
+}
+
+.playing {
+	font: bold;
+}
+
+.hidden {
+	display:none;
+}

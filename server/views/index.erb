@@ -1,0 +1,197 @@
+<script src="/js/soundmanager2-jsmin.js"></script>
+
+<script>
+	MuusioPlayer = {
+
+		currentTrack: null,
+		volume: 100,
+		tracks: {},
+		filterBy: "",
+
+		init: function(){
+			soundManager.url = '/soundmanager/swf/';
+
+			//For now... flash plays better... but the HTML fallback will still exist
+			soundManager.preferFlash = true;
+
+			soundManager.onready(function() {
+				$(function(){
+					MuusioPlayer.fetchSongs();
+					MuusioPlayer.bindInterface();
+				})
+			});
+		},
+
+		fetchSongs: function(){
+			$.getJSON('/files', function(data){
+				var newTracks = {};
+				$.each(data, function(k,track){
+					newTracks[track.file_hash] = track;
+				});
+
+				if(JSON.stringify(MuusioPlayer.tracks) != JSON.stringify(newTracks) || MuusioPlayer.tracks == {}){
+					console.log('Redrawing tracks...')
+					MuusioPlayer.tracks = newTracks;
+					MuusioPlayer.drawTracks();
+					MuusioPlayer.filterSongList();
+				}
+			});
+
+			setTimeout('MuusioPlayer.fetchSongs()', 10000);
+		},
+
+		playTrack: function(track){
+			MuusioPlayer.id3 = track.id3;
+			soundManager.stopAll();
+			sound = MuusioPlayer.getSound(track);
+			sound.play();
+			MuusioPlayer.ui.$progress.val(0);
+			MuusioPlayer.ui.$progress.attr('max', track.duration);
+			MuusioPlayer.currentTrack = soundManager.play(track.file_hash);
+		},
+
+		drawTracks: function(){
+			var newTrackList=[];
+			$.each(MuusioPlayer.tracks, function(k,track){
+				$track = $('#song-tmpl').tmpl(track)
+
+				//Always have a currentTrack
+				if(!MuusioPlayer.currentTrack) MuusioPlayer.currentTrack = MuusioPlayer.getSound(track);
+
+				$track.click(function(){
+					MuusioPlayer.playTrack(track);
+				})
+
+				newTrackList.push($track);
+			})
+
+			$('#song-list').empty();
+			$(newTrackList).appendTo('#song-list');
+		},
+
+		bindInterface: function(){
+			MuusioPlayer.ui = {
+				$progress: $('#song-progress')
+			}
+
+			$('#play-pause-button').click(function(e){
+
+				if(MuusioPlayer.currentTrack.playState == 0)
+					MuusioPlayer.currentTrack.play();
+				else if(MuusioPlayer.currentTrack.paused) 
+					MuusioPlayer.currentTrack.resume(); 
+				else 
+					MuusioPlayer.currentTrack.pause();
+
+				console.log(MuusioPlayer.currentTrack);
+
+				e.preventDefault();
+				return false;
+			});
+
+			$('#prev-button').click(function(e){
+				MuusioPlayer.playPrev();
+				e.preventDefault(); return false;
+			})
+
+			$('#next-button').click(function(e){
+				MuusioPlayer.playNext();
+				e.preventDefault(); return false;
+			})
+
+			//Click on the progress bar to FF
+			MuusioPlayer.ui.$progress.click(function(e){	
+				MuusioPlayer.currentTrack.setPosition((e.offsetX/$(this).width()) * MuusioPlayer.ui.$progress.attr('max'));
+				MuusioPlayer.updateProgressBar();
+			});
+
+			$('#song-list-filter').focus().keyup(function() {
+				MuusioPlayer.filterBy = $(this).val();
+				MuusioPlayer.filterSongList();
+			});
+		},
+
+		filterSongList: function(){
+			$('#song-list tr:not(:contains("' + MuusioPlayer.filterBy + '"))').addClass('hidden');
+			$('#song-list tr:contains("' + MuusioPlayer.filterBy + '")').removeClass('hidden');
+		},
+
+		onTrackFinish: function(){
+			MuusioPlayer.playNext();
+		},
+
+		playNext: function(){
+			$next = $("#song-list tr:not('[class*=hidden]')").filter('#'+MuusioPlayer.currentTrack.sID).nextAll(":not(.hidden):first");
+			if($next.length < 1)
+				$next = $("#song-list tr:not('[class*=hidden]'):first");
+
+			console.log("Now looking for " + $next.attr('id'));
+			MuusioPlayer.playTrack(MuusioPlayer.tracks[$next.attr('id')]);
+		},
+
+		playPrev: function(){
+			$prev = $("#song-list tr:not('[class*=hidden]')").filter('#'+MuusioPlayer.currentTrack.sID).prevAll(":not(.hidden):first");
+			console.log($prev);
+			if($prev.length < 1)
+				$prev = $("#song-list tr:not('[class*=hidden]'):last");
+
+			console.log("Now looking for " + $prev.attr('id'));
+			MuusioPlayer.playTrack(MuusioPlayer.tracks[$prev.attr('id')]);
+		},
+
+		monitorTrack: function(track){
+			MuusioPlayer.updateProgressBar();
+		},
+
+		getSound: function(track){
+			return soundManager.createSound({
+				id: track.file_hash,
+				url: '/stream_file/'+track.file_hash,
+				onfinish: function(){
+					MuusioPlayer.onTrackFinish(track.file_hash)
+				},
+				whileplaying: function(){
+					MuusioPlayer.monitorTrack(this);
+				},
+				onload: function(){}
+			});
+		},
+
+		updateProgressBar: function(){
+			MuusioPlayer.ui.$progress.val(MuusioPlayer.currentTrack.position);
+		}
+	}
+
+	MuusioPlayer.init()
+</script>
+
+<div id="header"><h3>MUUSIO IS SUPER KEWL</h3>
+
+<div id="controls">
+	<div class="left"></div>
+	<div class="clear"></div>
+	<a href="#" id="play-pause-button">Play/Pause </a>
+	<a href="#" id="prev-button">Prev</a>
+	<progress max="0" value="0" id="song-progress"></progress>
+	<a href="#" id="next-button">Next</a>
+</div>
+
+	
+<form action="" method="post">
+	<input type="text" id="song-list-filter" value="" size="50" />
+</form>
+
+
+<table id="song-list" class="">
+	<th>Title</th>
+	<th>Artist</th>
+	<th>Album</th>
+</table>
+
+<script id="song-tmpl" type="text/x-jquery-tmpl">
+	<tr class="track" id="${file_hash}">
+		<td>${id3.title}</td>
+		<td>${id3.artist}</td>
+		<td>${id3.album}</td>
+	</tr>
+</script>

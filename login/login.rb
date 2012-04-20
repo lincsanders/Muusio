@@ -35,15 +35,14 @@ class Login
         else
           abort("Goodbye... Sweet prince...")
         end 
-      end
-
-      if !@@preferences.api_token.nil?
+      else
+        puts "Logging you in... Please wait..."
         if !check_api_token?
           @@preferences.api_token=nil
           @@preferences.save
           authenticate!
         else
-          puts "Welcome back, " + @@preferences.username
+          puts "Welcome back, #{@@preferences.username}!"
         end
       end
     end
@@ -89,6 +88,7 @@ class Login
     end
 
     def check_api_token?
+      return true if @@assume_logged_in
       begin
         res = Net::HTTP.post_form(@check_api_token_uri, 'api_token' => @@preferences.api_token)
         response = JSON.parse(res.body)

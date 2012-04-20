@@ -19,7 +19,7 @@ class Server < Sinatra::Base
   end
 
   get '/' do
-
+    erb :index
   end
 
   get '/version' do
@@ -27,7 +27,12 @@ class Server < Sinatra::Base
   end
 
   get '/files' do
-    Indexer.files.to_json
+    LibraryTrack.all.to_json
+  end
+
+  get '/stream_file/:file_hash' do
+    file = LibraryTrack.all(file_hash: params[:file_hash]).first
+    send_file File.open(file.fullpath)
   end
 
   get '/changes' do
