@@ -1,4 +1,6 @@
 require 'mp3info'
+# require 'fssm'
+require_relative 'filesystemwatcher/filesystemwatcher'
 
 class Indexer
   @bp = File.expand_path File.dirname(__FILE__)
@@ -13,6 +15,9 @@ class Indexer
   @send_files_thread=nil
   @send_ping_pong_thread=nil
   @send_file_list_thread=nil
+  @listen_for_file_changes_thread=nil
+
+  @file_monitor_threads={}
 
   @files=[]
   @changes=[]
@@ -27,15 +32,17 @@ class Indexer
         self.kill
       }
 
-      @listen_for_file_changes=Thread.new{
-        @indexed_directories.each do |dir|
-          Thread.new{listen_for_file_changes dir}
-        end
-      }
+      @indexed_directories.each do |dir|
+        listen_for_file_changes dir
+      end
     end
 
     def add_file(file)
-      mp3 = Mp3Info.open(file)
+      begin
+        mp3 = Mp3Info.open(file)
+      rescue => e
+        puts e.inspect if @@logging
+      end
 
       LibraryTrack.create({
         filename: File.basename(file),
@@ -43,11 +50,11 @@ class Indexer
         fullpath: file,
         file_hash: "mt_"+Digest::MD5.hexdigest(File.read(file)),
         size: File.size(file),
-        duration: (mp3.length * 1000).to_s, #ms
+        duration: mp3 ? (mp3.length.to_i * 1000).to_s : 0, #ms
         id3: {
-          title: mp3.tag.title ? mp3.tag.title : File.basename(file),
-          artist: mp3.tag.artist,
-          album: mp3.tag.album,
+          title: mp3 && mp3.tag.title ? mp3.tag.title : File.basename(file),
+          artist: mp3 ? mp3.tag.artist : '',
+          album: mp3 ? mp3.tag.album : '',
         },
       })
     end
@@ -87,8 +94,8 @@ class Indexer
           if LibraryTrack.count(:fullpath=>file) == 0
             add_file file  
             puts 'Added: '+file if @@logging
-          else
-            puts 'Already in library: '+file if @@logging
+          # else
+          #   puts 'Already in library: '+file if @@logging
           end
         end
 
@@ -99,35 +106,26 @@ class Indexer
     end
 
     def listen_for_file_changes(dir)
-      monitor = FSSM::Monitor.new
+      @file_monitor_threads[dir] = Thread.new{
+        watcher = FileSystemWatcher.new
 
-      puts "Now watching #{dir} for changes..." if @@logging
+        watcher.addDirectory(dir, "**/*.mp3")
+        watcher.sleepTime = 10
 
-      monitor.path(dir, '**/*.mp3') do |path|
+        watcher.start { |status,file|
+          if(status == FileSystemWatcher::CREATED) then
+              puts "created: #{file}" if @@logging
+              self.add_file file if LibraryTrack.count(:fullpath=>file) == 0
+          elsif(status == FileSystemWatcher::MODIFIED) then
+              puts "modified: #{file}" if @@logging
+          elsif(status == FileSystemWatcher::DELETED) then
+              puts "deleted: #{file}" if @@logging
+              self.delete_file file
+          end
+        }
 
-        path.create do |base,file|
-          base=base.force_encoding("UTF-8")
-          file=file.force_encoding("UTF-8")
-
-          puts "CREATED: #{file} (in #{base})" if @@logging
-
-          self.add_file "#{base}/#{file}"
-        end
-        
-        path.update do |base,file|
-          puts "UPDATED: #{file} (in #{base})" if @@logging
-        end
-
-        path.delete do |base,file|
-          base=base.force_encoding("UTF-8")
-          file=file.force_encoding("UTF-8")
-
-          puts "DELETED: #{file} (in #{base})" if @@logging
-
-          self.delete_file "#{base}/#{file}"
-        end
-      end
-      monitor.run
+        puts "Now watching #{dir} for changes..." if @@logging
+      }
     end
   end
 end

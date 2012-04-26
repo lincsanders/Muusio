@@ -46,12 +46,12 @@ class Downloader
       }
     end
 
-    def download_torrent(torrent_file)
+    def download_torrent(torrent_file, filename=nil)
       return false if (torrent_file.nil? || torrent_file == '')
 
       @download_threads << Thread.new{
         puts "Downloading #{torrent_file}" if @@logging
-        download = TorrentDownload.new(torrent_file)
+        download = TorrentDownload.new(torrent_file, filename)
         @current_downloads << download
 
         progress = -1.0

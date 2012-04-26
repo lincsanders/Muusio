@@ -11,14 +11,30 @@ progress {
 	float:left;
 }
 
+.right {
+	float:right;
+}
+
 .clear {
 	clear: both;
 }
 
 .playing {
-	font: bold;
+	font-weight: bold;
+	background-color: #5CCCCC;
 }
 
 .hidden {
 	display:none;
+}
+
+.track div{
+	padding: 5px;
+	cursor: hand;
+}
+
+#available-song-list {
+	display: none;
+	border: 1px solid;
+	padding: 5px;
 }
