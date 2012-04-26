@@ -16,8 +16,8 @@ ARGV.each do|a|
   @@assume_logged_in = true if a=="--aassume-logged-in" || a=="-a"
 end
 
-@@mothership="http://localhost:3000"
-# @@mothership="http://muusio-mothership.herokuapp.com"
+# @@mothership="http://localhost:3000"
+@@mothership="http://muusio-mothership.herokuapp.com"
 
 require_relative 'indexer/indexer'
 require_relative 'downloader/downloader'
