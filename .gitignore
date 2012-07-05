@@ -1,5 +1,5 @@
-*.mp3
-mp3/
+**.mp3
+indexer/mp3
+indexer/mp3/*
 .DS_Store
-db/storage
-*.db
+**.db
