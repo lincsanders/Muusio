@@ -1,22 +1,24 @@
-progress {
-	width: 500px;
+body {
+	padding-bottom: 100px;
+}
+
+#song-progress-wrapper {
+	position: relative;
+	padding-left: 30px;
+	padding-right: 30px;
+}
+
+#song-progress {
+	position: absolute;
+	top: 0px;
+	left: 60px;
+	right: 30px;
+	height: 20px;
 }
 
 #song-list {
-	overflow:scroll;
+	overflow: scroll;
 	height: auto;
-}
-
-.left {
-	float:left;
-}
-
-.right {
-	float:right;
-}
-
-.clear {
-	clear: both;
 }
 
 .playing {
@@ -37,4 +39,57 @@ progress {
 	display: none;
 	border: 1px solid;
 	padding: 5px;
+}
+
+
+/********************
+>> Controls (Play, Pause, ETC)
+********************/
+
+#controls {
+	position: fixed;
+	bottom: 0px;
+	padding-bottom: 3px;
+	right: 3;
+	left: 3;
+	background-color: white;
+}
+
+.controls-button {
+	width: 20px;
+	height: 20px;
+	margin-left: 5px;
+	margin-right: 5px;
+}
+
+.play {
+	background: url('/img/buttons/play.png');
+}
+
+.pause {
+	background: url('/img/buttons/pause.png');
+}
+
+#next-button {
+	background: url('/img/buttons/ff.png');
+}
+
+#prev-button {
+	background: url('/img/buttons/rew.png');
+}
+
+/********************
+>> General Purpose
+********************/
+
+.left {
+	float:left;
+}
+
+.right {
+	float:right;
+}
+
+.clear {
+	clear: both;
 }

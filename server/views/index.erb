@@ -1,272 +1,50 @@
 <script src="/js/soundmanager2-jsmin.js"></script>
+<script src="/js/jquery.tinysort.min.js"></script>
+<script src="/js/muusio.js"></script>
 
 <script>
-	MuusioPlayer = {
-
-		currentTrack: null,
-		volume: 100,
-		tracks: {},
-		filterBy: "",
-
-		init: function(){
-			soundManager.url = '/soundmanager/swf/';
-
-			//For now... flash plays better... but the HTML fallback will still exist
-			soundManager.preferFlash = true;
-
-			soundManager.onready(function() {
-				$(function(){
-					MuusioPlayer.fetchSongs();
-					MuusioPlayer.bindInterface();
-				})
-			});
-		},
-
-		fetchSongs: function(){
-			$.getJSON('/files', function(data){
-				var newTracks = {};
-				$.each(data, function(k,track){
-					newTracks[track.file_hash] = track;
-				});
-
-				if(JSON.stringify(MuusioPlayer.tracks) != JSON.stringify(newTracks) || MuusioPlayer.tracks == {}){
-					console.log('Redrawing tracks...');
-					MuusioPlayer.tracks = newTracks;
-					MuusioPlayer.drawTracks();
-					MuusioPlayer.filterSongList();
-				}
-			});
-
-			setTimeout('MuusioPlayer.fetchSongs()', 10000);
-		},
-
-		playTrack: function(track){
-			MuusioPlayer.id3 = track.id3;
-			soundManager.stopAll();
-			sound = MuusioPlayer.getSound(track);
-			MuusioPlayer.currentTrack = soundManager.play(track.file_hash);
-			MuusioPlayer.drawInterface();
-		},
-
-		drawTracks: function(){
-			var newTrackList=[];
-			$.each(MuusioPlayer.tracks, function(k,track){
-				$track = $('#song-tmpl').tmpl(track)
-
-				//Always have a currentTrack
-				if(!MuusioPlayer.currentTrack) MuusioPlayer.currentTrack = MuusioPlayer.getSound(track);
-
-				$track.click(function(){
-					MuusioPlayer.playTrack(track);
-				})
-
-				newTrackList.push($track);
-			})
-
-			$('#song-list').empty();
-			$(newTrackList).appendTo('#song-list');
-			MuusioPlayer.drawInterface();
-		},
-
-		drawInterface: function(){
-			trackInfo = MuusioPlayer.tracks[MuusioPlayer.currentTrack.sID];
-
-			MuusioPlayer.ui.$progress.progressbar('option', 'value', 0);
-			$('.playing').removeClass('playing');
-			$('#'+trackInfo.file_hash).addClass('playing');
-		},
-
-		bindInterface: function(){
-			progressBar = $('#song-progress').progressbar({value: 0});
-
-			MuusioPlayer.ui = {
-				$progress: progressBar,
-				$availableSongs: $('#available-song-list')
-			}
-
-			$('#play-pause-button').click(function(e){
-				MuusioPlayer.playPause();
-				e.preventDefault(); return false;
-			});
-
-			$('#prev-button').click(function(e){
-				MuusioPlayer.playPrev();
-				e.preventDefault(); return false;
-			})
-
-			$('#next-button').click(function(e){
-				MuusioPlayer.playNext();
-				e.preventDefault(); return false;
-			})
-
-			$('#upload-button').click(function(e){
-				MuusioPlayer.uploadTrack();
-				e.preventDefault(); return false;
-			})
-
-			$('#show-available-downloads-button').click(function(e){
-				MuusioPlayer.showAvailableDownloads();
-				e.preventDefault(); return false;
-			})
-
-			//Click on the progress bar to FF
-			MuusioPlayer.ui.$progress.click(function(e){	
-				MuusioPlayer.currentTrack.setPosition((e.offsetX/$(this).width()) * MuusioPlayer.currentTrack.durationEstimate);
-				MuusioPlayer.updateProgressBar();
-			});
-
-			MuusioPlayer.updateProgressBar();
-
-			$('#song-list-filter').focus().keyup(function() {
-				MuusioPlayer.filterBy = $(this).val();
-				MuusioPlayer.filterSongList();
-			});
-		},
-
-		showAvailableDownloads: function(){
-			if(MuusioPlayer.ui.$availableSongs.css('display') == 'none'){
-				$.getJSON('/available_downloads', function(data){
-					MuusioPlayer.ui.$availableSongs.empty();
-					availableTracks = [];
-
-					$.each(data, function(k,track){
-						$track = $('#available-song-tmpl').tmpl(track)
-
-						$track.click(function(e){
-							MuusioPlayer.downloadTrack($(this).attr('data-file-hash'));
-							e.preventDefault(); return false;
-						});
-
-						$track.appendTo(MuusioPlayer.ui.$availableSongs);
-					});
-				});
-			}
-
-			MuusioPlayer.ui.$availableSongs.toggle();
-		},
-
-		filterSongList: function(){
-			$('#song-list .track:not(:contains("' + MuusioPlayer.filterBy + '"))').addClass('hidden');
-			$('#song-list .track:contains("' + MuusioPlayer.filterBy + '")').removeClass('hidden');
-		},
-
-		onTrackFinish: function(){
-			MuusioPlayer.playNext();
-		},
-
-		playNext: function(){
-			$next = $("#song-list .track:not('[class*=hidden]')").filter('#'+MuusioPlayer.currentTrack.sID).nextAll(":not(.hidden):first");
-			if($next.length < 1)
-				$next = $("#song-list .track:not('[class*=hidden]'):first");
-
-			console.log("Now looking for " + $next.attr('id'));
-			MuusioPlayer.playTrack(MuusioPlayer.tracks[$next.attr('id')]);
-		},
-
-		playPrev: function(){
-			$prev = $("#song-list .track:not('[class*=hidden]')").filter('#'+MuusioPlayer.currentTrack.sID).prevAll(":not(.hidden):first");
-			console.log($prev);
-			if($prev.length < 1)
-				$prev = $("#song-list .track:not('[class*=hidden]'):last");
-
-			console.log("Now looking for " + $prev.attr('id'));
-			MuusioPlayer.playTrack(MuusioPlayer.tracks[$prev.attr('id')]);
-		},
-
-		playPause: function(){
-			if(MuusioPlayer.currentTrack.playState == 0)
-				MuusioPlayer.currentTrack.play();
-			else if(MuusioPlayer.currentTrack.paused) 
-				MuusioPlayer.currentTrack.resume(); 
-			else 
-				MuusioPlayer.currentTrack.pause();
-
-			console.log(MuusioPlayer.currentTrack);
-		},
-
-		monitorTrack: function(track){
-			//MuusioPlayer.updateProgressBar();
-		},
-
-		getSound: function(track){
-			return soundManager.createSound({
-				id: track.file_hash,
-				url: '/stream_file/'+track.file_hash,
-				onfinish: function(){
-					MuusioPlayer.onTrackFinish(track.file_hash)
-				},
-				whileplaying: function(){
-					MuusioPlayer.monitorTrack(this);
-				},
-				onload: function(){}
-			});
-		},
-
-		updateProgressBar: function(){
-			if(MuusioPlayer.currentTrack != null && MuusioPlayer.currentTrack.position){
-				percentageComplete = (MuusioPlayer.currentTrack.position / (MuusioPlayer.currentTrack.durationEstimate / 100));
-				MuusioPlayer.ui.$progress.progressbar("option", 'value', percentageComplete);	
-			}
-			setTimeout('MuusioPlayer.updateProgressBar()', 400);
-		},
-
-		uploadTrack: function(){
-			$.ajax({
-				url: '/upload',
-				type: 'POST',
-				data: {file_hash: MuusioPlayer.currentTrack.sID},
-				dataType: 'json',
-				success: function(data){
-					console.log(data);
-				}
-			})
-		},
-
-		downloadTrack: function(file_hash){
-			$.ajax({
-				url: '/download',
-				type: 'POST',
-				data: {'file_hash': file_hash},
-				dataType: 'json',
-				success: function(data){
-					console.log(data);
-				}
-			})
-		}
-	}
-
 	MuusioPlayer.init();
 </script>
 
-<div id="header"><h3>MUUSIO IS SUPER KEWL</h3></div>
-
 <div id="controls">
-	<div class="left"></div>
+	<span id="current-time">00:00</span>/<span id="total-time">00:00</span>
+
+	<input type="text" id="song-list-filter" value="" size="50" class="right" />
 	<div class="clear"></div>
-	<a href="#" id="play-pause-button">Play/Pause</a> 
-	<a href="#" id="upload-button">Upload</a> 
-	<a href="#" id="show-available-downloads-button">Show Available Downloads</a> 
-	<div id="song-progress"></div>
-	<a href="#" id="prev-button" class="left">Prev</a>
-	<a href="#" id="next-button" class="right">Next</a>
+
+	<div class="left">
+		<a href="#" id="upload-button">Upload</a> 
+		<a href="#" id="show-available-downloads-button">Show Available Downloads</a> 
+	</div>
+	<div class="right">
+		Sorting: 
+		<a href="#" id="sort-artist">Artist</a>
+		<a href="#" id="sort-album">Album</a>
+		<a href="#" id="sort-title">Title</a>
+	</div> 
+	<div class="clear"></div>
+
+	<div id="prev-button" class="controls-button left"></div>
+	<div id="play-pause-button" class="controls-button left play"></div>
+	<div id="song-progress-wrapper">
+		<div id="song-progress" class="left"></div>
+	</div>
+	<div id="next-button" class="controls-button right"></div>
+	<div class="clear"></div>
 </div>
 
 <div class="clear"></div>
-	
-<form action="" method="post">
-	<input type="text" id="song-list-filter" value="" size="50" />
-</form>
 
 <div id="available-song-list">None!</div>
-
 
 <div id="song-list"></div>
 
 <script id="song-tmpl" type="text/x-jquery-tmpl">
 	<div class="track" id="${file_hash}">
-		<div class="left">${id3.title}</div>
-		<div class="left">${id3.artist}</div>
-		<div class="left">${id3.album}</div>
+		<div class="left song-title">${id3.title}</div>
+		<div class="left song-artist">${id3.artist}</div>
+		<div class="left song-album">${id3.album}</div>
+		<div class="left"><a href="#" class="queue-song">Queue</a></div>
 		<div class="clear"></div>
 	</div>
 </script>

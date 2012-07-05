@@ -30,8 +30,8 @@ Db.run!
 @@preferences=Preferences.first
 
 #Login.hello!
-Login.ensure_computer_name!
-Login.authenticate!
+#Login.ensure_computer_name!
+#Login.authenticate!
 
 Indexer.run!
 Downloader.run!

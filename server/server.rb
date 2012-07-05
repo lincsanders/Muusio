@@ -32,6 +32,8 @@ class Server < Sinatra::Base
 
   get '/stream_file/:file_hash' do
     file = LibraryTrack.all(file_hash: params[:file_hash]).first
+    return [false].to_json if !file
+    
     send_file File.open(file.fullpath)
   end
 
@@ -60,6 +62,15 @@ class Server < Sinatra::Base
     end
 
     {t: r['t']}.to_json
+  end
+
+  post '/add_folder' do
+    folder = WatchedFolder.all(path: params[:path]).first
+    new_folder = WatchedFolder.create({path: params[:path]}) if !folder
+
+    Indexer.listen_for_file_changes params[:path]
+
+    {status: 'Folder Added!'}.to_json
   end
 
   get '/available_downloads' do

@@ -20,6 +20,11 @@ class Db
       if !preferences = Preferences.first
         Preferences.create({})
       end
+
+      if !received_folder = WatchedFolder.all(path: Indexer.received_dir).first
+        puts "Adding received folder to indexer..." if @@logging
+        WatchedFolder.create({path: Indexer.received_dir})
+      end
     end
   end
 end

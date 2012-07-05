@@ -4,12 +4,7 @@ require_relative 'filesystemwatcher/filesystemwatcher'
 
 class Indexer
   @bp = File.expand_path File.dirname(__FILE__)
-
-  @indexed_directories = [
-    @bp + "/mp3/",
-    ENV['HOME']+'/Music/iTunes/iTunes Media/Music/',
-    ENV['HOME']+'/Music/iTunes/iTunes Media/Podcasts/',
-  ]
+  @received_dir = @bp + "/mp3"
 
   @file_changes_thread=nil
   @send_files_thread=nil
@@ -25,6 +20,7 @@ class Indexer
   class << self
     def files; @files; end
     def changes; @changes; end
+    def received_dir; @received_dir; end
 
     def run!
       @create_file_list=Thread.new{
@@ -32,8 +28,13 @@ class Indexer
         self.kill
       }
 
-      @indexed_directories.each do |dir|
-        listen_for_file_changes dir
+      WatchedFolder.all.each do |wf|
+        if File.directory?(wf.path)
+          listen_for_file_changes wf.path
+        else
+          puts "#{wf.path} does not exist, removing from indexer..." if @@logging
+          wf.destroy
+        end
       end
     end
 
@@ -67,8 +68,8 @@ class Indexer
     
     def create_file_list
       folder_files = []
-      @indexed_directories.each do |dir|
-        folder_files = folder_files + Dir.glob(dir + "**/*.mp3")
+      WatchedFolder.all.each do |wf|
+        folder_files = folder_files + Dir.glob(wf.path + "/**/*.mp3")
       end
 
       # abort files.sort.inspect
@@ -118,6 +119,8 @@ class Indexer
               self.add_file file if LibraryTrack.count(:fullpath=>file) == 0
           elsif(status == FileSystemWatcher::MODIFIED) then
               puts "modified: #{file}" if @@logging
+              self.delete_file file
+              self.add_file file if LibraryTrack.count(:fullpath=>file) == 0
           elsif(status == FileSystemWatcher::DELETED) then
               puts "deleted: #{file}" if @@logging
               self.delete_file file
