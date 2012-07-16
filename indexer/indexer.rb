@@ -127,7 +127,7 @@ class Indexer
           end
         }
 
-        puts "Now watching #{dir} for changes..." if @@logging
+        puts "Watching #{dir} for changes...\n" if @@logging
       }
     end
   end

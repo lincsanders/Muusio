@@ -7,29 +7,31 @@
 </script>
 
 <div id="controls">
-	<span id="current-time">00:00</span>/<span id="total-time">00:00</span>
+	<div id="show-hide-controls">
+		<div class="left">
+			<span id="current-time">00:00</span>/<span id="total-time">00:00</span>
+		</div>
 
-	<input type="text" id="song-list-filter" value="" size="50" class="right" />
-	<div class="clear"></div>
-
-	<div class="left">
-		<a href="#" id="upload-button">Upload</a> 
-		<a href="#" id="show-available-downloads-button">Show Available Downloads</a> 
+		<a href="#" id="show-hide-controls" class="right">...</a>
+		<div class="clear"></div>
 	</div>
-	<div class="right">
-		Sorting: 
-		<a href="#" id="sort-artist">Artist</a>
-		<a href="#" id="sort-album">Album</a>
-		<a href="#" id="sort-title">Title</a>
-	</div> 
-	<div class="clear"></div>
 
-	<div id="prev-button" class="controls-button left"></div>
+	<div id="hideable-controls">
+		<input type="text" id="song-list-filter" value="" size="50" class="right" />
+
+		<div class="left">
+			<a href="#" id="upload-button">Upload</a> 
+			<a href="#" id="show-available-downloads-button">Show Available Downloads</a> 
+		</div>
+		<div class="clear"></div>
+	</div>
+
+	<div id="prev-button" class="controls-button left">&lt;&lt;</div>
 	<div id="play-pause-button" class="controls-button left play"></div>
 	<div id="song-progress-wrapper">
 		<div id="song-progress" class="left"></div>
 	</div>
-	<div id="next-button" class="controls-button right"></div>
+	<div id="next-button" class="controls-button right">&gt;&gt;</div>
 	<div class="clear"></div>
 </div>
 
@@ -37,14 +39,23 @@
 
 <div id="available-song-list">None!</div>
 
-<div id="song-list"></div>
+<div id="song-list-headers">
+	<div class="left song-title"><a href="#" id="sort-title">Title</a></div>
+	<div class="left song-artist"><a href="#" id="sort-artist">Artist</a></div>
+	<div class="left song-album"><a href="#" id="sort-album">Album</a></div>
+	<div class="left song-sort-random"><a href="#" id="sort-random">Random</a></div>
+	<div class="clear"></div>
+</div>
+
+<div id="song-list">
+</div>
 
 <script id="song-tmpl" type="text/x-jquery-tmpl">
 	<div class="track" id="${file_hash}">
-		<div class="left song-title">${id3.title}</div>
-		<div class="left song-artist">${id3.artist}</div>
-		<div class="left song-album">${id3.album}</div>
-		<div class="left"><a href="#" class="queue-song">Queue</a></div>
+		<div class="left song-title">${id3.title}&nbsp;</div>
+		<div class="left song-artist">${id3.artist}&nbsp;</div>
+		<div class="left song-album">${id3.album}&nbsp;</div>
+		<div class="left song-sort-random"><a href="#" class="queue-song">Q</a> <a href="#" class="open-file-location">O</a></div>
 		<div class="clear"></div>
 	</div>
 </script>

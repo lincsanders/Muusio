@@ -50,6 +50,12 @@ class Server < Sinatra::Base
     {status: 'Download Thread Spawned!'}.to_json
   end
 
+  post '/download_torrent' do
+    Downloader.download_torrent(params[:torrent])
+
+    {status: 'Download Thread Spawned!'}.to_json
+  end
+
   post '/upload' do
     file = LibraryTrack.all(file_hash: params[:file_hash]).first
 
@@ -78,6 +84,17 @@ class Server < Sinatra::Base
     r = JSON.parse r
 
     r.to_json
+  end
+
+  post '/open_file_location' do
+    if file = LibraryTrack.all(file_hash: params[:file_hash]).first
+      system "open '#{file.path}'"
+
+      {status: "Open Launched"}.to_json
+    else
+      {status: false, file: file}.to_json
+    end
+
   end
 
   get '/current_downloads' do

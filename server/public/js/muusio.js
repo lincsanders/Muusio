@@ -58,9 +58,6 @@ MuusioPlayer = {
 		$.each(MuusioPlayer.tracks, function(k,track){
 			$track = $('#song-tmpl').tmpl(track)
 
-			//Always have a currentTrack
-			if(!MuusioPlayer.currentTrack) MuusioPlayer.currentTrack = MuusioPlayer.getSound(track);
-
 			$track.click(function(){
 				MuusioPlayer.playTrack(track);
 			})
@@ -71,12 +68,22 @@ MuusioPlayer = {
 				e.preventDefault(); return false;
 			})
 
+			$track.find('.open-file-location').on('click', function(e){
+				MuusioPlayer.openFileLocation(track.file_hash);
+
+				e.preventDefault(); return false;
+			})
+
 			newTrackList.push($track);
 		})
 
 		$('#song-list').empty();
 		$(newTrackList).appendTo('#song-list');
 		MuusioPlayer.sortTracks();
+
+		//Always have a currentTrack
+		if(!MuusioPlayer.currentTrack) MuusioPlayer.currentTrack = MuusioPlayer.getSound(MuusioPlayer.tracks[$(MuusioPlayer.ui.$songList.find('.track')[0]).attr('id')]);
+
 		MuusioPlayer.drawInterface();
 	},
 
@@ -95,10 +102,12 @@ MuusioPlayer = {
 
 		MuusioPlayer.ui = {
 			$progress: progressBar,
+			$songList: $('#song-list'),
 			$availableSongs: $('#available-song-list'),
 			$totalTime: $('#total-time'),
 			$currentTime: $('#current-time'),
-			$playPauseButton: $('#play-pause-button')
+			$playPauseButton: $('#play-pause-button'),
+			$hideableControls: $('#hideable-controls')
 		}
 
 		$('#play-pause-button').click(function(e){
@@ -148,8 +157,22 @@ MuusioPlayer = {
 			e.preventDefault(); return false;
 		})
 
+		$('#sort-random').click(function(e){
+			if(MuusioPlayer.sorting != 'song-random')
+				MuusioPlayer.sorting = 'song-random'
+
+			MuusioPlayer.sortTracks();
+
+			e.preventDefault(); return false;
+		})
+
 		$('#show-available-downloads-button').click(function(e){
 			MuusioPlayer.showAvailableDownloads();
+			e.preventDefault(); return false;
+		})
+
+		$('#show-hide-controls').click(function(e){
+			MuusioPlayer.showHideControls();
 			e.preventDefault(); return false;
 		})
 
@@ -312,6 +335,18 @@ MuusioPlayer = {
 		})
 	},
 
+	openFileLocation: function(sID){
+		$.ajax({
+			url: '/open_file_location',
+			type: 'POST',
+			data: {file_hash: sID},
+			dataType: 'json',
+			success: function(data){
+				console.log(data);
+			}
+		})
+	},
+
 	downloadTrack: function(file_hash){
 		$.ajax({
 			url: '/download',
@@ -325,19 +360,28 @@ MuusioPlayer = {
 	},
 
 	sortTracks: function () {
-		$('div#song-list>div').tsort('.'+MuusioPlayer.sorting);
+		if(MuusioPlayer.sorting == 'song-random'){
+			$('div#song-list>div').tsort({order: 'rand'});
+		}else if(MuusioPlayer.sorting)
+			$('div#song-list>div').tsort('.'+MuusioPlayer.sorting);
 	},
 
 	updatePlayPauseButton: function(){
 		MuusioPlayer.ui.$playPauseButton.removeClass('play').removeClass('pause');
 
-		if(!MuusioPlayer.currentTrack)
+		if(!MuusioPlayer.currentTrack || MuusioPlayer.currentTrack.playState == 0 || MuusioPlayer.currentTrack.paused){
 			MuusioPlayer.ui.$playPauseButton.addClass('play');
-		else if(MuusioPlayer.currentTrack.playState == 0) 
-			MuusioPlayer.ui.$playPauseButton.addClass('play');
-		else if(MuusioPlayer.currentTrack.paused) 
-			MuusioPlayer.ui.$playPauseButton.addClass('play');
-		else 
+			MuusioPlayer.ui.$playPauseButton.html('►');
+		}else {
 			MuusioPlayer.ui.$playPauseButton.addClass('pause');
+			MuusioPlayer.ui.$playPauseButton.html('❚❚');
+		}
+	},
+
+	showHideControls: function(){
+		if(MuusioPlayer.ui.$hideableControls.css('display') == 'none'){
+			MuusioPlayer.ui.$hideableControls.slideDown('fast');
+		}else
+			MuusioPlayer.ui.$hideableControls.slideUp('fast');
 	}
 }

@@ -40,7 +40,7 @@ class Downloader
               puts "Thread killed gracefully!" if @@logging
             end
           end
-          puts "#{@download_threads.length} total download threads..." if @@logging && @download_threads.length > 0
+          puts "#{@download_threads.length} total download threads..." if @download_threads.length > 0 && @@logging
           sleep 10
         end 
       }
