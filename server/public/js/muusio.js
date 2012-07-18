@@ -27,6 +27,21 @@ MuusioPlayer = {
 		});
 	},
 
+	getNextSongId: function(popQueue){
+		if(MuusioPlayer.queue.length > 0){
+			nextTrackSID = MuusioPlayer.queue[0];
+			if(popQueue) MuusioPlayer.queue = MuusioPlayer.queue.slice(1);
+		} else{
+			$next = $("#song-list .track:not('[class*=hidden]')").filter('#'+MuusioPlayer.currentTrack.sID).nextAll(":not(.hidden):first");
+			if($next.length < 1)
+				$next = $("#song-list .track:not('[class*=hidden]'):first");	
+
+			nextTrackSID = $next.attr('id');
+		}
+
+		return nextTrackSID;
+	},
+
 	fetchSongs: function(){
 		$.getJSON('/files', function(data){
 			var newTracks = {};
@@ -47,10 +62,22 @@ MuusioPlayer = {
 
 	playTrack: function(track){
 		MuusioPlayer.id3 = track.id3;
-		soundManager.stopAll();
-		sound = MuusioPlayer.getSound(track);
-		MuusioPlayer.currentTrack = soundManager.play(track.file_hash);
-		MuusioPlayer.drawInterface();
+
+		prevTrack = MuusioPlayer.currentTrack;
+
+		if(soundManager.sounds[track.file_hash]){
+			soundManager.sounds[track.file_hash].paused ? soundManager.sounds[track.file_hash].resume() : soundManager.sounds[track.file_hash].play();
+
+			MuusioPlayer.currentTrack = soundManager.sounds[track.file_hash];
+		} else {
+			sound = MuusioPlayer.getSound(track);
+			MuusioPlayer.currentTrack = soundManager.play(track.file_hash);
+		}
+
+		if(prevTrack.sID != MuusioPlayer.currentTrack.sID)
+			prevTrack.stop();
+
+		MuusioPlayer.drawInterface();	
 	},
 
 	drawTracks: function(){
@@ -251,18 +278,8 @@ MuusioPlayer = {
 	},
 
 	playNext: function(){
-		if(MuusioPlayer.queue.length > 0){
-			nextTrackSID = MuusioPlayer.queue[0];
-			MuusioPlayer.queue = MuusioPlayer.queue.slice(1);
-		} else{
-			$next = $("#song-list .track:not('[class*=hidden]')").filter('#'+MuusioPlayer.currentTrack.sID).nextAll(":not(.hidden):first");
-			if($next.length < 1)
-				$next = $("#song-list .track:not('[class*=hidden]'):first");	
+		nextTrackSID = MuusioPlayer.getNextSongId(true);
 
-			nextTrackSID = $next.attr('id');
-		}
-
-		console.log("Now looking for " + nextTrackSID);
 		MuusioPlayer.playTrack(MuusioPlayer.tracks[nextTrackSID]);
 	},
 
@@ -315,6 +332,9 @@ MuusioPlayer = {
 			time = ('0'+d.getMinutes().toString()).substr(-2) + ':' + ('0'+d.getSeconds().toString()).substr(-2)
 			if(d.getHours() - 1 > 0) time = ('0'+d.getHours().toString()).substr(-2) + ':' + time
 			MuusioPlayer.ui.$currentTime.html(time);
+
+			if(((MuusioPlayer.currentTrack.duration - MuusioPlayer.currentTrack.position) / 1000) < 5)
+				MuusioPlayer.loadNextTrack();
 		}
 
 		clearTimeout(MuusioPlayer.updateProgressBarTimer);
@@ -383,5 +403,16 @@ MuusioPlayer = {
 			MuusioPlayer.ui.$hideableControls.slideDown('fast');
 		}else
 			MuusioPlayer.ui.$hideableControls.slideUp('fast');
+	},
+
+	loadNextTrack: function(){
+		nextSongId = MuusioPlayer.getNextSongId();
+
+		if(soundManager.sounds[nextSongId]) return true;
+
+		console.log('Loading next track...');
+
+		sound = MuusioPlayer.getSound({file_hash: nextSongId});
+		soundManager.play(nextSongId).pause();
 	}
 }
