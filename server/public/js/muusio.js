@@ -66,9 +66,14 @@ MuusioPlayer = {
 		prevTrack = MuusioPlayer.currentTrack;
 
 		if(soundManager.sounds[track.file_hash]){
-			soundManager.sounds[track.file_hash].paused ? soundManager.sounds[track.file_hash].resume() : soundManager.sounds[track.file_hash].play();
+			newTrack = soundManager.sounds[track.file_hash]
 
-			MuusioPlayer.currentTrack = soundManager.sounds[track.file_hash];
+			if(newTrack.playState != 0)
+				newTrack.stop();
+
+			newTrack.play();
+
+			MuusioPlayer.currentTrack = newTrack;
 		} else {
 			sound = MuusioPlayer.getSound(track);
 			MuusioPlayer.currentTrack = soundManager.play(track.file_hash);
@@ -77,7 +82,7 @@ MuusioPlayer = {
 		if(prevTrack.sID != MuusioPlayer.currentTrack.sID)
 			prevTrack.stop();
 
-		MuusioPlayer.drawInterface();	
+		MuusioPlayer.drawInterface();
 	},
 
 	drawTracks: function(){
@@ -280,7 +285,7 @@ MuusioPlayer = {
 	playNext: function(){
 		nextTrackSID = MuusioPlayer.getNextSongId(true);
 
-		MuusioPlayer.playTrack(MuusioPlayer.tracks[nextTrackSID]);
+		if(nextTrackSID) MuusioPlayer.playTrack(MuusioPlayer.tracks[nextTrackSID]);
 	},
 
 	playPrev: function(){
@@ -407,6 +412,8 @@ MuusioPlayer = {
 
 	loadNextTrack: function(){
 		nextSongId = MuusioPlayer.getNextSongId();
+
+		if(!nextSongId) return false;
 
 		if(soundManager.sounds[nextSongId]) return true;
 

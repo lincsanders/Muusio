@@ -1,6 +1,10 @@
 body {
 	padding-top: 10px;
-	padding-bottom: 50px;
+	padding-bottom: 60px;
+
+	background-color: #F5F5F5;
+	font-family: Helvetica;
+	-webkit-font-smoothing: antialiased !important;
 }
 
 a {
@@ -22,7 +26,15 @@ a:hover {
 	top: 0px;
 	left: 60px;
 	right: 30px;
-	height: 20px;
+	height: 10px;
+	background-color: black;
+	background: none;
+}
+
+#song-progress .ui-progressbar-value {
+	background: none;
+	border: 1px solid #106F7C;
+	background-image: -webkit-linear-gradient(bottom, #106F7C 4%, #308F9C 52%);
 }
 
 #hideable-controls {
@@ -35,7 +47,26 @@ a:hover {
 }
 
 .playing {
-	background-color: #EEEEEE;
+	-webkit-animation: highlight-track .5s ease-in;
+
+	background-color: #DDDDDD;
+	-webkit-box-shadow: -1px 1px 1px #777;
+	text-shadow: 2px 2px 2px #BBB;
+}
+
+@-webkit-keyframes highlight-track {
+	0% {
+		background-color: #F5F5F5;
+		-webkit-box-shadow: -1px 1px 1px #FFF;
+		text-shadow: none;
+	}
+	50% {
+		background-color: #DDDDDD;
+	}
+	100% {
+		-webkit-box-shadow: -1px 1px 1px #777;
+		text-shadow: 2px 1px 2px #BBB;
+	}
 }
 
 .hidden {
@@ -43,30 +74,38 @@ a:hover {
 }
 
 .track {
-	margin-top: 5px;
+	padding: 5px;
 
-	padding-left: 1px;
-	padding-bottom: 1px;
-	border-left: 1px solid #DDD;
+	padding-left: 3px;
+	margin-left: 2px;
+
+	padding-bottom: 0px;
+	margin-bottom: 3px;
+
 	border-bottom: 1px solid #DDD;
-
 	cursor: hand;
-}
-
-#song-list-headers {
-	position: fixed;
-	background-color: white;
-	width: 100%;
-	top: 0px;
-}
-
-#song-list-headers div {
-	font-weight: bold;
 }
 
 .track div {
 	padding-right: 5px;
 	cursor: hand;
+
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+#song-list-headers {
+	position: fixed;
+	background-color: #F5F5F5;
+	width: 100%;
+	top: 0px;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+#song-list-headers div {
+	font-weight: bold;
 }
 
 .song-title {
@@ -101,11 +140,17 @@ a:hover {
 	bottom: 0px;
 	padding: 0px;
 	margin: 0px;
-	padding-bottom: 3px;
-	right: 3;
-	left: 3;
-	background-color: #EEE;
+	padding: 5px;
+	right: 0;
+	left: 0;
+	color: white;
+	background-color: #333;
+	-webkit-box-shadow: 0px -2px 3px #777;
 	
+}
+
+#controls a {
+	color: white;
 }
 
 .controls-button {
