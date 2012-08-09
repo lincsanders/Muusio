@@ -100,4 +100,29 @@ class Server < Sinatra::Base
   get '/current_downloads' do
     Downloader.current_downloads.to_json
   end
+
+  post '/notify' do
+    if file = LibraryTrack.all(file_hash: params[:file_hash]).first
+
+      begin
+        mp3 = Mp3Info.open(file.fullpath)
+      rescue => e
+        puts e.inspect if @@logging
+      end
+
+      id3 = file.id3
+
+      apic = {}
+
+      if(mp3.tag2["APIC"])
+        apic['text_encoding'], apic['mime_type'], apic['picture_type'], apic['description'], apic['picture_data'] = mp3.tag2["APIC"].unpack("c Z* c Z* a*")
+      end
+
+      g = Growl.new "localhost", "ruby-growl"
+      g.add_notification "notification", "ruby-growl Notification", apic['picture_data']
+      g.notify "notification", "Muusio: Now Playing", "#{id3[:title] + (id3[:album] ? "\n#{id3[:album]}" : '') + (id3[:artist] ? "\n#{id3[:artist]}" : '')}"
+      
+      return {status: true}.to_json
+    end
+  end
 end

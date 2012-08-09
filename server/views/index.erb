@@ -8,21 +8,24 @@
 
 <div id="controls">
 	<div id="show-hide-controls">
-		<div class="left">
-			<span id="current-time">00:00</span>/<span id="total-time">00:00</span>
-		</div>
-
-		<a href="#" id="show-hide-controls" class="right">...</a>
+		<a href="#" class="right">...</a>
 		<div class="clear"></div>
 	</div>
 
 	<div id="hideable-controls">
-		<input type="text" id="song-list-filter" value="" size="50" class="right" />
+		<div class="time-display left">
+			<span id="current-time">00:00</span>/<span id="total-time">00:00</span>
+		</div>
 
-		<div class="left">
+		<div id="track-name-display" class="left"></div>
+
+		<input type="text" id="song-list-filter" value="" placeholder="Filter..." class="right" />
+
+		<div class="right hidden">
 			<a href="#" id="upload-button">Upload</a> 
 			<a href="#" id="show-available-downloads-button">Show Available Downloads</a> 
 		</div>
+
 		<div class="clear"></div>
 	</div>
 
@@ -34,6 +37,9 @@
 	<div id="next-button" class="controls-button right">&gt;&gt;</div>
 	<div class="clear"></div>
 </div>
+
+<div id="show-hide-right-panel" class=""><<</div>
+<div id="right-panel" class="">Right Panel</div>
 
 <div class="clear"></div>
 
