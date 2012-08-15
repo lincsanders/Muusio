@@ -6,8 +6,8 @@ require 'thread'
 require 'highline/import'
 require 'net/http'
 require 'ruby-growl'
-require 'ruby-growl/ruby_logo'
 require 'tempfile'
+require 'devil'
 
 # For debug
 require 'pp'

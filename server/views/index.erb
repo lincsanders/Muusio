@@ -38,9 +38,6 @@
 	<div class="clear"></div>
 </div>
 
-<div id="show-hide-right-panel" class=""><<</div>
-<div id="right-panel" class="">Right Panel</div>
-
 <div class="clear"></div>
 
 <div id="available-song-list">None!</div>
@@ -53,8 +50,26 @@
 	<div class="clear"></div>
 </div>
 
-<div id="song-list">
+<div id="song-list"></div>
+
+<div class="show-hide-tabs">
+	<div id="show-hide-queue" data-display-id="queue-display">Queue</div>
+	<div id="show-hide-info" data-display-id="info-display">Info</div>
 </div>
+
+<div id="queue-display" class="right-panel">
+	<h3>Queue</h3>
+	<div id="queue-song-list"></div>
+</div>
+
+<div id="info-display" class="right-panel">
+	<h3>Info</h3>
+	<div class="loading"></div>
+	<img src="" class="cover"/>
+	<div class="text-info"></div>
+</div>
+
+
 
 <script id="song-tmpl" type="text/x-jquery-tmpl">
 	<div class="track" id="${file_hash}">
@@ -68,4 +83,9 @@
 
 <script id="available-song-tmpl" type="text/x-jquery-tmpl">
 	<a href="#" class="available-song-download" data-file-hash="${file_hash}">Obtain ${file_name}</a><br />
+</script>
+
+
+<script id="queued-track-tmpl" type="text/x-jquery-tmpl">
+	${id3.title}<br />
 </script>

@@ -7,6 +7,7 @@ MuusioPlayer = {
 	currentTrack: null,
 	updateProgressBarTimer: null,
 	filterSongListTimer: null,
+	fetchNowPlayingInfoTimer: null,
 	volume: 100,
 	tracks: {},
 	sorting: "song-artist",
@@ -21,7 +22,6 @@ MuusioPlayer = {
 			useHighPerformance: true
 		})
 		MuusioPlayer.bindHotkeys();
-
 
 		soundManager.onready(function() {
 			$(function(){
@@ -40,7 +40,9 @@ MuusioPlayer = {
 	},
 
 	setQueue: function(newQueue){
-		return localStorage.setItem('queue', newQueue ? JSON.stringify(newQueue) : JSON.stringify([]))
+		localStorage.setItem('queue', newQueue ? JSON.stringify(newQueue) : JSON.stringify([]))
+		MuusioPlayer.loadQueuedTracksDisplay();
+		return true
 	},
 
 	getFilterBy: function(){
@@ -86,7 +88,7 @@ MuusioPlayer = {
 			}
 		});
 
-		setTimeout('MuusioPlayer.fetchSongs()', 10000);
+		setTimeout(MuusioPlayer.fetchSongs, 10000);
 	},
 
 	setCurrentTrack: function(sound){
@@ -96,6 +98,8 @@ MuusioPlayer = {
 
 		MuusioPlayer.currentTrack = sound;
 		MuusioPlayer.updateProgressBar();
+
+		MuusioPlayer.getNowPlayingInfo();
 	},
 
 	playTrack: function(track){
@@ -125,7 +129,7 @@ MuusioPlayer = {
 		MuusioPlayer.setSavedCurrentTrackId(MuusioPlayer.currentTrack.sID)
 
 		//Remove the song from the queue if is is the next song in line to play
-		if(MuusioPlayer.getQueue()[0] == MuusioPlayer.currentTrack.sID);
+		if(MuusioPlayer.getQueue()[0] == MuusioPlayer.currentTrack.sID)
 			MuusioPlayer.setQueue(MuusioPlayer.getQueue().slice(1));
 
 		MuusioPlayer.drawInterface();
@@ -182,10 +186,12 @@ MuusioPlayer = {
 			$('.playing').removeClass('playing');
 			$('#'+trackInfo.file_hash).addClass('playing');
 		}
+		MuusioPlayer.loadQueuedTracksDisplay()
 	},
 
 	bindInterface: function(){
 		MuusioPlayer.ui = {
+			$body: $('body'),
 			$progress: $('#song-progress').progressbar({value: 0}),
 			$songList: $('#song-list'),
 			$availableSongs: $('#available-song-list'),
@@ -196,8 +202,9 @@ MuusioPlayer = {
 			$nextButton: $('#next-button'),
 			$uploadButton: $('#upload-button'),
 			$queue: $('#queue-song-list'),
-			$rightPanel: $('#right-panel'),
-			$showHideRightPanel: $('#show-hide-right-panel'),
+			$showHideTabs: $('.show-hide-tabs div'),
+			$queueDisplay: $('#queue-display'),
+			$showHideQueue: $('#show-hide-queue'),
 			$hideableControls: $('#hideable-controls'),
 			$songListFilter: $('#song-list-filter'),
 			$trackNameDisplay: $('#track-name-display'),
@@ -205,13 +212,19 @@ MuusioPlayer = {
 			$sortAlbum: $('#sort-album'),
 			$sortTitle: $('#sort-title'),
 			$sortRandom: $('#sort-random'),
+			$queuedTrackTmpl: $('#queued-track-tmpl'),
 			$showAvailableDownloadsButton: $('#show-available-downloads-button'),
-			$showHideControls: $('#show-hide-controls')
+			$queueSongList: $('#queue-song-list'),
+			$showHideControls: $('#show-hide-controls'),
+			$infoDisplayCover: $('#info-display .cover'),
+			$infoDisplayText: $('#info-display .text-info'),
+			$infoDisplayLoading: $('#info-display .loading'),
+			$loadingGif: $('<img src="/img/loading.gif" id="load-gif">')
 		}
 
 		ui = MuusioPlayer.ui;
 
-		ui.$showHideRightPanel.on('click', MuusioPlayer.showHideRightPanel);
+		//ui.$showHideQueue.resizable({ handles: "e" });
 
 		ui.$playPauseButton.on('click', function(e){
 			MuusioPlayer.playPause();
@@ -279,16 +292,27 @@ MuusioPlayer = {
 			e.preventDefault(); return false;
 		})
 
-		ui.$showHideRightPanel.on('mouseover', function(e){
-			$(this).animate({opacity: 1});
+		ui.$showHideTabs.on('mouseover', function(e){
+			$(this).stop();
+			$(this).animate({opacity: 1, right: '0px'});
 		})
 
-		ui.$showHideRightPanel.on('mouseleave', function(e){
-			$(this).animate({opacity: 0.2});
+		ui.$showHideTabs.on('mouseleave', function(e){
+			$(this).stop();
+			$(this).animate({opacity: 0.2, right: '-5px'});
 		})
+
+		ui.$showHideTabs.on('click', function(e){
+			$this = $(this);
+			$display = $('#'+$this.attr('data-display-id'));
+
+			MuusioPlayer.showHideRightDisplay($display, $this);
+		})
+
+		ui.$loadingGif.load();
 
 		//Click on the progress bar to FF
-		ui.$progress.on('click', function(e){	
+		ui.$progress.on('click', function(e){
 			MuusioPlayer.currentTrack.setPosition((e.offsetX/$(this).width()) * MuusioPlayer.currentTrack.durationEstimate);
 			MuusioPlayer.updateProgressBar();
 		});
@@ -507,13 +531,6 @@ MuusioPlayer = {
 			MuusioPlayer.ui.$hideableControls.slideUp('fast');
 	},
 
-	showHideRightPanel: function(){
-		if(parseInt(MuusioPlayer.ui.$rightPanel.css('right')) < 0)
-			MuusioPlayer.ui.$rightPanel.animate({right: '0%'});
-		else
-			MuusioPlayer.ui.$rightPanel.animate({right: '-25%'});
-	},
-
 	loadNextTrack: function(){
 		nextSongId = MuusioPlayer.getNextSongId();
 
@@ -545,5 +562,66 @@ MuusioPlayer = {
 
 	setSavedCurrentTrackId: function(trackId){
 		return localStorage.setItem('currentTrackId', trackId);
+	},
+
+	loadQueuedTracksDisplay: function(){
+		MuusioPlayer.ui.$queueSongList.empty();
+
+		$.each(MuusioPlayer.getQueue(), function(k, id){
+			track = MuusioPlayer.tracks[id]
+			MuusioPlayer.ui.$queuedTrackTmpl.tmpl(track).appendTo(MuusioPlayer.ui.$queueSongList)
+		})
+	},
+
+	showHideRightDisplay: function($panel, $tab){
+		if(parseInt($panel.css('left')) > 100){
+			$('.right-panel').not($panel).animate({
+				left: '110%'
+			})
+			$panel.animate({left: '75%'});
+
+			MuusioPlayer.ui.$showHideTabs.not($this).animate({opacity: 0.2, right: '-5px'}).removeClass('active-tab')
+			$tab.addClass('active-tab');
+		} else{
+			$panel.animate({left: '110%'});
+			MuusioPlayer.ui.$showHideTabs.removeClass('active-tab')
+		}
+	},
+
+	getNowPlayingInfo: function(){
+		var ui = MuusioPlayer.ui;
+		ui.$infoDisplayText.fadeOut('fast');
+		ui.$infoDisplayCover.fadeOut('fast', function(){
+			ui.$infoDisplayText.empty();
+			ui.$infoDisplayLoading.html(MuusioPlayer.ui.$loadingGif).fadeIn();
+		});
+
+
+		clearTimeout(MuusioPlayer.fetchNowPlayingInfoTimer);
+		MuusioPlayer.fetchNowPlayingInfoTimer = setTimeout(MuusioPlayer.fetchNowPlayingInfo, 2000);
+	},
+
+	fetchNowPlayingInfo: function(){
+		$.get('/info/'+MuusioPlayer.currentTrack.sID)
+		.success(function(info){
+
+			$.each(info.id3, function(key, value){
+				if(value && value != '')
+					ui.$infoDisplayText.append('<strong>'+MuusioPlayer.strToUpper(key)+': </strong><br />'+value+'&nbsp;<br /><br />');
+			});
+
+			ui.$infoDisplayLoading.fadeOut('fast', function(){
+				if(info.cover_url){
+					ui.$infoDisplayCover.attr('src', info.cover_url)
+					ui.$infoDisplayCover.fadeIn()
+				}
+
+				ui.$infoDisplayText.fadeIn();
+			});
+		})
+	},
+
+	strToUpper: function(str){
+	    return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
 	}
 }
