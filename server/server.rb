@@ -1,9 +1,7 @@
 require "rest_client"
-require_relative "playlist"
 require_relative "track"
 
 class Server < Sinatra::Base
-  use Playlist
   use Track
 
   set :port, 44144
@@ -172,9 +170,60 @@ class Server < Sinatra::Base
 
       g = Growl.new "localhost", "ruby-growl"
       g.add_notification "notification", "ruby-growl Notification", (apic['picture_data'] && apic['picture_data'].size < 256000) ? apic['picture_data'] : nil
-      g.notify "notification", "Muusio: Now Playing", "#{id3[:title] + (id3[:album] ? "\n#{id3[:album]}" : '') + (id3[:artist] ? "\n#{id3[:artist]}" : '')}"
+      g.notify "notification", "#{id3[:title]}", "#{(id3[:album] ? "#{id3[:album]}\n" : '') + (id3[:artist] ? "#{id3[:artist]}\n" : '')}"
       
+      {status: true}.to_json
+    end
+  end
+
+  post '/new_playlist' do
+    if playlist = Playlist.all(name: params[:name]).first
+      return {status: false, id: playlist.id, message: "This playlist already exists!"}.to_json 
+    else
+      Playlist.create({
+        name: params[:name],
+      })
+
       return {status: true}.to_json
+    end
+  end
+
+  post '/add_to_playlist' do
+    if (library_track = LibraryTrack.all(file_hash: params[:file_hash]).first) && (playlist = Playlist.all(id: params[:playlist_id]).first)
+      playlist_track = PlaylistTrack.create({
+        playlist_id: playlist.id,
+        library_track_id: library_track.id,
+      })
+      
+      return {status: true, library_track: library_track}.to_json
+    else
+      return {status: false, message: 'Track/Playlist not found.'}.to_json
+    end
+  end
+
+  get '/playlists' do
+    Playlist.all.to_json
+  end
+
+  get '/playlist/:id' do
+    if playlist = Playlist.all(id: params[:id]).first
+      tracks = []
+
+      playlist.playlist_tracks.each { |pt| tracks << pt.library_track }
+
+      return tracks.to_json
+    else
+      return {status: false, message: 'Playlist not found.'}.to_json
+    end
+  end
+
+  get '/playlist/:id/delete' do
+    if playlist = Playlist.all(id: params[:id]).first
+      playlist.playlist_tracks.all.destroy
+      
+      playlist.destroy
+    else
+      return {status: false, message: 'Playlist not found.'}.to_json
     end
   end
 end

@@ -20,6 +20,13 @@
 		<div id="track-name-display" class="left"></div>
 
 		<input type="text" id="song-list-filter" value="" placeholder="Filter..." class="right" />
+		<div id="volume" class="right show-hide-volume">
+			<a href="#" class="typicn">u</a>
+		</div>
+
+		<div class="volume-control hidden">
+			<input type="range" min="0" max="100" value="0" class="right" />
+		</div>
 
 		<div class="right hidden">
 			<a href="#" id="upload-button">Upload</a> 
@@ -29,12 +36,12 @@
 		<div class="clear"></div>
 	</div>
 
-	<div id="prev-button" class="controls-button left">&lt;&lt;</div>
+	<div id="prev-button" class="controls-button left previous typicn"></div>
 	<div id="play-pause-button" class="controls-button left play"></div>
 	<div id="song-progress-wrapper">
 		<div id="song-progress" class="left"></div>
 	</div>
-	<div id="next-button" class="controls-button right">&gt;&gt;</div>
+	<div id="next-button" class="controls-button right next typicn"></div>
 	<div class="clear"></div>
 </div>
 
@@ -55,6 +62,8 @@
 <div class="show-hide-tabs">
 	<div id="show-hide-queue" data-display-id="queue-display">Queue</div>
 	<div id="show-hide-info" data-display-id="info-display">Info</div>
+	<div id="show-hide-info" data-display-id="download-display">Torrent</div>
+	<div id="show-hide-playlist" data-display-id="playlist-display">Playlist</div>
 </div>
 
 <div id="queue-display" class="right-panel">
@@ -69,6 +78,21 @@
 	<div class="text-info"></div>
 </div>
 
+<div id="download-display" class="right-panel">
+	<h3>Download</h3>
+	<input type="text" id="torrent-url" placeholder="Torrent URL" value="" />
+	<input type="button" id="torrent-download" value="Go!" />
+
+	<div class="text-info"></div>
+</div>
+
+<div id="playlist-display" class="right-panel">
+	<h3>Playlists</h3>
+	<input type="text" id="new-playlist-name" placeholder="Playlist..." value="" />
+	<input type="button" id="new-playlist" value="Go!" />
+
+	<div class="text-info"></div>
+</div>
 
 
 <script id="song-tmpl" type="text/x-jquery-tmpl">
@@ -76,7 +100,11 @@
 		<div class="left song-title">${id3.title}&nbsp;</div>
 		<div class="left song-artist">${id3.artist}&nbsp;</div>
 		<div class="left song-album">${id3.album}&nbsp;</div>
-		<div class="left song-sort-random"><a href="#" class="queue-song">Q</a> <a href="#" class="open-file-location">O</a></div>
+		<div class="left song-sort-random track-actions">
+			<a href="#" class="queue-song typicn">z</a>
+			<a href="#" class="open-file-location typicn">,</a>
+			<a href="#" class="add-to-playlist typicn">&#35;</a>
+		</div>
 		<div class="clear"></div>
 	</div>
 </script>
@@ -88,4 +116,14 @@
 
 <script id="queued-track-tmpl" type="text/x-jquery-tmpl">
 	${id3.title}<br />
+</script>
+
+
+<script id="playlist-tmpl" type="text/x-jquery-tmpl">
+	<div class="playlist-list-entry" data-id="${id}" id="playlist_${id}">
+		<span class="select">${name}</span> <span class="delete">x</span>
+		<div class="loading"></div>
+		<ul class="song-list">
+		</ul>
+	</div>
 </script>

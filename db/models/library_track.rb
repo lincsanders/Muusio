@@ -10,4 +10,6 @@ class LibraryTrack
   property :size, Integer
   property :duration, String, length: 0..500
   property :id3, Object
+  
+  has n, :playlist_track
 end

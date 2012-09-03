@@ -98,6 +98,16 @@ a:hover {
 	text-overflow: ellipsis;
 }
 
+.track-actions a {
+	text-decoration: none;
+	width: 14px;
+	height: 14px;
+}
+
+.track-actions a:hover {
+	text-decoration: underline;
+}
+
 #song-list-headers {
 	position: fixed;
 	background-color: #333;
@@ -130,7 +140,7 @@ a:hover {
 }
 
 .song-sort-random {
-	width: 5%;
+	width: 15%;
 }
 
 #available-song-list {
@@ -163,6 +173,10 @@ a:hover {
 	-webkit-box-shadow: -1px 1px 1px #777;
 }
 
+.right-panel .text-info {
+	padding-top: 20px;
+}
+
 .show-hide-tabs {
 	position: fixed;
 	top: 30px;
@@ -179,7 +193,7 @@ a:hover {
 	opacity: 0.2;
 	cursor: pointer;
 	height: 13px;
-	right: -5px;
+	right: -35px;
 	padding: 5px;
 	-webkit-box-shadow: 0px 0px 3px #777;
 }
@@ -207,6 +221,23 @@ a:hover {
 	padding-left: 50px;
 }
 
+.playlist-list-entry span {
+	cursor: pointer;
+}
+
+.selected {
+	text-decoration: underline;
+	font-weight: bold;
+}
+
+.playlist-list-entry .delete{
+	color: lightgrey;
+}
+
+.playlist-list-entry .delete:hover{
+	color: grey;
+}
+
 
 /********************
 >> Controls (Play, Pause, ETC)
@@ -230,6 +261,16 @@ a:hover {
 
 #controls a {
 	color: white;
+}
+
+.volume-control{
+	position: fixed;
+	right: 85px;
+	bottom: 100px;
+	padding-top: 2px;
+	background-color: #F5F5F5;
+	-webkit-box-shadow: -1px 1px 1px #777;
+	-webkit-transform: rotate(-90deg);
 }
 
 #track-name-display {
